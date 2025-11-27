@@ -18,7 +18,7 @@ maven 'maven3'
 				sh 'ls -ltr'
 				sh ''' mvn sonar:sonar \\
 						-Dsonar.host.url=http://3.147.69.151:9000/ \\
-						-Dsonar.login=squ_0f506c835304d8244ae0150ba9619a1eddff7ec4'''
+						-Dsonar.login='''
 					}
 }
 		
