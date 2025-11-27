@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+    tools{
+        jdk 'jdk-8'
+    }
+
+    stages {
+        stage('git') {
+            steps {
+                echo 'scm'
+				git branch: 'main', url: 'https://github.com/kodurusupriya/mavenproject.git'
+            }
+        }
+		
+		stage('sonar') {
+            steps {
+                echo 'scanning project'
+			    sh '''mvn sonar:sonar \\
+  -Dsonar.host.url=http://3.147.69.151:9000 \\
+  -Dsonar.login=squ_0f506c835304d8244ae0150ba9619a1eddff7ec4'''
+            }
+        }
+		
+		stage('build') {
+            steps {
+                echo 'generating artifact using maven build tool'
+			    sh 'mvn clean install'
+            }
+        }
+		
+		stage('nexus artifactory') {
+            steps {
+                echo 'publish to nexus'
+			    sh 'mvn  deploy'
+            }
+        }
+		stage('deploy to tomcat') {
+            steps {
+                echo 'tomcat deploy'
+			    deploy adapters: [tomcat9(credentialsId: 'tomcat', path: '', url: 'http://100.25.144.30:8091/')], contextPath: 'mc-app-batch13', war: '**/*.war'
+            }
+        }
+    }
+}

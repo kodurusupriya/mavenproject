@@ -1,0 +1,74 @@
+pipeline {
+    agent any
+	tools {
+maven 'maven3'
+}
+
+    stages {
+        stage('Checkout') {
+			steps {
+				echo 'Cloning GIT HUB Repo'
+				git branch: 'main', url: 'https://github.com/kodurusupriya/mavenproject.git'
+			}
+		}
+			
+				stage('SonarQube Scan') {
+			steps {
+				echo 'Scanning project'
+				sh 'ls -ltr'
+				sh ''' mvn sonar:sonar \\
+						-Dsonar.host.url=http://3.147.69.151:9000/ \\
+						-Dsonar.login=squ_0f506c835304d8244ae0150ba9619a1eddff7ec4'''
+					}
+}
+		
+		stage('Build Artifact') {
+			steps {
+			echo 'Build Artifact'
+			sh 'mvn clean package'
+			}
+}
+		
+		stage('Build Docker Image') {
+			steps {
+			echo 'Build Docker Image'
+			sh 'docker build -t supriyanaidu/myapp:${BUILD_NUMBER} .'
+			}
+}
+		stage('Push to Docker Hub') {
+			steps {
+				script {
+				
+				withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhub')]) {
+				sh 'docker login -u supriyanaidu -p ${dockerhub}
+}
+
+				sh 'docker push supriyanaidu/myapp:${BUILD_NUMBER}'
+				echo 'Pushed to Docker Hub'
+				}
+			}
+}
+	
+		stage('Update Deployment File') {
+			environment {
+				GIT_REPO_NAME = "mavenproject"
+				GIT_USER_NAME = "kodurusupriya"
+			}
+			steps {
+				echo 'Update Deployment File'
+				withCredentials([string(credentialsId: 'githubtocken', variable: 'githubtoken')]) {
+				sh '''
+				git config user.email "supriyanaidu113@gmail.com"
+				git config user.name "kodurusupriya"
+				sed -i "s/myapp:.*/myapp:${BUILD_NUMBER}/g"  deploymentfiles/deployment.yml
+				git add .
+				git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+				git push
+				https://${githubtoken}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}
+				HEAD:main
+				'''
+			}
+}
+}
+    }
+}

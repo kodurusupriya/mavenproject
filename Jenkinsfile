@@ -5,7 +5,7 @@ pipeline {
         stage('CLONE SCM') {
             steps {
                 echo 'Cloning Mc-app project code'
-				git branch: 'main', url: 'https://github.com/devopstraininghub/mindcircuit13.git'
+				git branch: 'main', url: 'https://github.com/kodurusupriya/mavenproject.git'
             }
         }
 		
